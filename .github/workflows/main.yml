@@ -14,6 +14,19 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.PASSWORD }}
+          MYSQL_DATABASE: vetlog
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -23,10 +36,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
-      - name: Start MySQL
-        run: |
-          sudo /etc/init.d/mysql start
-          mysql -e "CREATE DATABASE $DATABASE;" -u$USER -p$PASSWORD
       - name: Set up MySQL
         run: ./gradlew -Dflyway.user=$USER -Dflyway.password=$PASSWORD -Dflyway.baselineOnMigrate=true flywayMigrate -i
       - name: Build with Gradle
